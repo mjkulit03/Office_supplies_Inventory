@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SupplyOps - Office Supplies & Admin Asset Inventory</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    /* Corporate Pink & Professional Rose Theme */
+    --primary: #9e2a2b;          /* Deep Corporate Berry/Rose */
+    --primary-dark: #3f0d12;     /* Dark Charcoal Pink/Black */
+    --primary-light: #c15c6e;    /* Rose Pink Accent */
+    --pink-mint: #f4acb7;        /* Soft Pastel Pink Accent */
+    --pink-light: #fff0f3;       /* Ultra Soft Pink Background Tint */
+    --pink-border: #f2c6de;      /* Muted Pink Border */
+    --accent: #ffb5a7;           /* Warm Coral Gold Accent */
+    --sidebar-bg: #210b10;       /* Very Dark Espresso Rose */
+    --bg: #faf4f5;               /* Off-white Soft Rose Background */
+    --card-bg: #ffffff;
+    --border: #e6ccd0;
+    --text: #2b1e22;
+    --text-muted: #6e595f;
+    --danger: #b00020;
+    --shadow: 0 4px 12px rgba(158, 42, 43, 0.08);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* LOGIN SCREEN */
+  .login-overlay {
+    position: fixed; inset: 0; background: var(--sidebar-bg);
+    display: flex; align-items: center; justify-content: center; z-index: 2000;
+  }
+  .login-card {
+    background: #fff; padding: 32px; border-radius: var(--radius);
+    border: 2px solid var(--primary-light); width: 100%; max-width: 400px; text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .login-card h2 { color: var(--primary); margin-bottom: 4px; font-weight: 800; }
+  .login-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+  .login-card .form-group { text-align: left; margin-bottom: 14px; }
+  .login-card label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+  .login-card input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; outline: none; }
+  .login-error { color: var(--danger); font-size: 12px; font-weight: bold; margin-bottom: 12px; display: none; background: #f8d7da; padding: 8px; border-radius: 4px; }
+
+  .app { display: flex; height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 250px; background: var(--sidebar-bg); border-right: 2px solid var(--primary-light);
+    display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;
+  }
+  .logo {
+    padding: 0 20px 20px; font-size: 20px; font-weight: 800; color: var(--pink-mint);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary-light), var(--pink-mint));
+    border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+    color: var(--sidebar-bg); font-weight: 900;
+  }
+  .user-badge {
+    padding: 8px 20px; margin-bottom: 12px; background: rgba(244, 172, 183, 0.15);
+    color: var(--pink-mint); font-size: 12px; font-weight: bold; border-top: 1px solid rgba(244, 172, 183, 0.2); border-bottom: 1px solid rgba(244, 172, 183, 0.2);
+  }
+  .nav { flex: 1; padding: 0 12px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 11px 16px; margin-bottom: 6px;
+    border-radius: var(--radius-sm); cursor: pointer; color: #f2c6de; font-size: 14px;
+    font-weight: 600; background: none; width: 100%; border: 1px solid transparent; text-align: left;
+  }
+  .nav-item:hover { background: rgba(193, 92, 110, 0.25); color: var(--pink-mint); }
+  .nav-item.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #ffffff; border: 1px solid var(--primary-light);
+  }
+  
+  .sidebar-footer { padding: 12px; border-top: 1px solid rgba(244, 172, 183, 0.2); display: flex; flex-direction: column; gap: 6px; }
+
+  /* MAIN LAYOUT */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .header {
+    background: var(--card-bg); border-bottom: 2px solid var(--pink-border);
+    padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .header-title h1 { font-size: 22px; font-weight: 800; color: var(--primary); }
+  .header-title p { font-size: 12px; color: var(--text-muted); }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  .content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+    border-radius: var(--radius-sm); border: none; font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; border: 1px solid var(--primary-light); }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-mint { background: linear-gradient(135deg, var(--primary-light), var(--pink-mint)); color: var(--primary-dark); font-weight: 800; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { border-color: var(--primary-light); }
+  .btn-icon { width: 30px; height: 30px; border-radius: var(--radius-sm); background: #fff; border: 1px solid var(--border); cursor: pointer; }
+
+  /* CARDS & STATS */
+  .card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: var(--card-bg); border-radius: var(--radius); border-left: 4px solid var(--primary-light); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 18px; display: flex; align-items: center; gap: 14px; }
+  .stat-icon { width: 44px; height: 44px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 20px; background: var(--pink-light); border: 1px solid var(--pink-border); }
+  .stat-value { font-size: 24px; font-weight: 800; color: var(--primary); }
+  .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+
+  /* TABLES */
+  .table-wrap { overflow-x: auto; max-width: 100%; border-radius: var(--radius); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+  th { text-align: left; padding: 12px 14px; font-size: 11px; font-weight: 800; color: #ffffff; text-transform: uppercase; background: var(--primary-dark); border-bottom: 2px solid var(--primary-light); }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); background: #fff; }
+  tr:hover td { background: var(--pink-light); }
+
+  .badge { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+  .badge-cat { background: #fce4ec; color: #880e4f; border: 1px solid #f8bbd0; }
+  .badge-low { background: #fff3cd; color: #856404; }
+  .badge-ok { background: #d4edda; color: #155724; }
+  .badge-out { background: #f8d7da; color: #721c24; }
+
+  .search-box { display: flex; align-items: center; background: var(--card-bg); border: 1px solid var(--pink-border); border-radius: var(--radius-sm); padding: 6px 10px; min-width: 250px; }
+  .search-box input { border: none; outline: none; font-size: 12px; background: transparent; width: 100%; }
+
+  /* MODALS */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(33, 11, 16, 0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(2px); }
+  .modal-overlay.active { display: flex; }
+  .modal { background: var(--card-bg); border-radius: var(--radius); width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; border: 2px solid var(--primary-light); }
+  .modal-header { padding: 16px 24px; background: var(--primary-dark); color: #ffffff; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--primary-light); }
+  .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--pink-mint); }
+  .modal-body { padding: 24px; }
+
+  .category-selector {
+    background: var(--pink-light);
+    border: 1px solid var(--pink-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .category-selector label {
+    display: block; font-size: 12px; font-weight: 800; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;
+  }
+  .category-selector select {
+    width: 100%; padding: 10px; border: 2px solid var(--primary); border-radius: var(--radius-sm); font-size: 14px; font-weight: bold; background: #fff; outline: none;
+  }
+
+  .form-section-title { font-size: 12px; font-weight: 800; color: var(--primary); text-transform: uppercase; border-bottom: 2px solid var(--pink-border); padding-bottom: 4px; margin: 16px 0 12px; }
+  .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .form-group { margin-bottom: 8px; }
+  .form-group.span-2 { grid-column: span 2; }
+  .form-group.span-3 { grid-column: span 3; }
+  .form-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+  .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; outline: none; }
+  .form-group input[readonly] { background: #f2f2f2; font-weight: bold; color: var(--primary); }
+
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 12px; }
+  .details-item { padding: 8px; background: var(--bg); border-radius: 4px; border-left: 3px solid var(--primary-light); }
+  .details-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+  .details-val { font-weight: 600; color: var(--primary); margin-top: 2px; }
+
+  .cat-form { display: none; }
+  .cat-form.active { display: block; }
+
+  @media print {
+    .sidebar, .header-actions, .btn, .btn-icon, .search-box { display: none !important; }
+    .main { overflow: visible !important; }
+    .content { padding: 0 !important; }
+    .card { border: none !important; box-shadow: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="login-screen">
+  <div class="login-card">
+    <h2>SupplyOps Admin</h2>
+    <p>Sign in to access corporate asset & inventory</p>
+    
+    <div id="login-error" class="login-error">Invalid Username or Password</div>
+    
+    <form onsubmit="event.preventDefault(); performLogin();">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-username" placeholder="e.g. admin" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      
+      <button type="submit" class="btn btn-mint" style="width: 100%; justify-content: center; padding: 10px; margin-top: 6px;">Login to Portal</button>
+    </form>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><div class="logo-icon">📁</div><span>SupplyOps</span></div>
+    <div class="user-badge" id="current-user-display">User: Not Logged In</div>
+    <nav class="nav">
+      <button class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')"><span>Dashboard</span></button>
+      <button class="nav-item" data-page="inventory" onclick="showPage('inventory')"><span>Asset & Supplies</span></button>
+      <button class="nav-item" data-page="suppliers" onclick="showPage('suppliers')"><span>Vendors & Suppliers</span></button>
+      <button class="nav-item" data-page="purchase-orders" onclick="showPage('purchase-orders')"><span>Purchase Orders</span></button>
+      <button class="nav-item admin-only" id="nav-users" data-page="users" onclick="showPage('users')"><span>User Profiles</span></button>
+      <button class="nav-item admin-only" id="nav-audit" data-page="audit-trail" onclick="showPage('audit-trail')"><span>Audit Trail</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn btn-mint admin-only" id="btn-export-json" style="width:100%; justify-content:center;" onclick="exportJSON()">💾 Export JSON</button>
+      <button class="btn btn-outline admin-only" id="btn-import-json" style="width:100%; justify-content:center; color:#fff; border-color:var(--pink-mint);" onclick="document.getElementById('file-import-json').click()">📂 Import JSON</button>
+      <input type="file" id="file-import-json" style="display:none" accept=".json" onchange="importJSON(event)">
+      <button class="btn btn-outline" style="width:100%; justify-content:center; color:#ff8888; border-color:#883333; margin-top:8px;" onclick="logout()">🔒 Logout</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="header">
+        <div class="header-title"><h1>Dashboard</h1><p>Corporate Office Supplies & Assets Overview</p></div>
+        <button class="btn btn-mint" onclick="window.print()">🖨️ Print Report</button>
+      </div>
+      <div class="content">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">📦</div><div><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Inventory Units</div></div></div>
+          <div class="stat-card"><div class="stat-icon">📄</div><div><div class="stat-value" id="stat-paper">0</div><div class="stat-label">Paper & Document Filing</div></div></div>
+          <div class="stat-card"><div class="stat-icon">✏️</div><div><div class="stat-value" id="stat-desk">0</div><div class="stat-label">Pens & Desk Supplies</div></div></div>
+          <div class="stat-card"><div class="stat-icon">🪑</div><div><div class="stat-value" id="stat-assets">0</div><div class="stat-label">Admin Furniture Assets</div></div></div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:12px; color:var(--primary);">Recent Assets & Supplies Added</h3>
+          <div id="recent-items-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div id="page-inventory" class="page">
+      <div class="header">
+        <div class="header-title"><h1>Office Supplies & Asset Inventory</h1><p>Corporate Master Catalog</p></div>
+        <div class="header-actions">
+          <div class="search-box">
+            <input type="text" id="inventory-search" placeholder="Search item, code, spec, location..." oninput="renderInventory()">
+          </div>
+          <button class="btn btn-outline" onclick="exportCSV()">📊 Export CSV</button>
+          <button class="btn btn-primary" onclick="openItemModal()">+ Add New Item / Asset</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Item Name / Brand</th>
+                  <th>Specs & Dimensions</th>
+                  <th>Type / Subtype</th>
+                  <th>Quantity</th>
+                  <th>Location / Dept</th>
+                  <th>PO No.</th>
+                  <th>Total Cost</th>
+                  <th>Condition / Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPPLIERS -->
+    <div id="page-suppliers" class="page">
+      <div class="header">
+        <div class="header-title"><h1>Office Vendors & Suppliers</h1><p>Manage Corporate Distributors</p></div>
+        <button class="btn btn-primary" onclick="openSupplierModal()">+ Add Supplier</button>
+      </div>
+      <div class="content">
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Supplier Name</th><th>Contact Person</th><th>Email</th><th>Phone</th><th>Actions</th></tr></thead>
+              <tbody id="suppliers-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PURCHASE ORDERS -->
+    <div id="page-purchase-orders" class="page">
+      <div class="header">
+        <div class="header-title"><h1>Purchase Orders</h1><p>Manage Reorders & Capital Requests</p></div>
+        <button class="btn btn-primary" onclick="openPOModal()">+ New PO</button>
+      </div>
+      <div class="content">
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>PO Number</th><th>Supplier</th><th>Item Reference</th><th>Quantity</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="po-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS MANAGEMENT -->
+    <div id="page-users" class="page">
+      <div class="header">
+        <div class="header-title"><h1>User Profiles</h1><p>Manage Admin Staff & Inventory Permissions</p></div>
+        <button class="btn btn-primary" id="add-user-btn" onclick="openUserModal()">+ Add New User</button>
+      </div>
+      <div class="content">
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>Email</th><th>Actions</th></tr></thead>
+              <tbody id="users-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDIT TRAIL -->
+    <div id="page-audit-trail" class="page">
+      <div class="header">
+        <div class="header-title"><h1>Audit Trail</h1><p>System Logs & Asset Movement Tracking</p></div>
+        <button class="btn btn-primary" id="export-audit-btn" onclick="exportAuditCSV()">📥 Export Audit Log (CSV)</button>
+      </div>
+      <div class="content">
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Timestamp</th><th>User</th><th>Action</th></tr></thead>
+              <tbody id="audit-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ITEM MODAL (DYNAMIC CATEGORIES) -->
+<div class="modal-overlay" id="item-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="item-modal-title">Add / Edit Office Supply or Asset</h2>
+      <button class="modal-close" onclick="closeModal('item-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="item-id">
+      
+      <!-- Category Chooser -->
+      <div class="category-selector">
+        <label for="item-category-select">Select Inventory Category</label>
+        <select id="item-category-select" onchange="switchCategoryForm(this.value)">
+          <option value="Paper & Filing Supplies">PAPER & FILING SUPPLIES (Bond paper, Folders)</option>
+          <option value="Pens & Desk Accessories">PENS & DESK ACCESSORIES (Ballpens, Clips, Cutters)</option>
+          <option value="Admin Office Furniture">ADMIN OFFICE FURNITURE & ASSETS (Chairs, Tables, Cabinets)</option>
+        </select>
+      </div>
+
+      <!-- FORM 1: PAPER & FILING -->
+      <div id="form-cat-paper" class="cat-form active">
+        <div class="form-section-title">Paper & Document Storage Details</div>
+        <div class="form-grid">
+          <div class="form-group"><label>SKU / Stock Code</label><input type="text" id="paper-sku" placeholder="PPR-101"></div>
+          <div class="form-group"><label>Item Description / Brand</label><input type="text" id="paper-brand" placeholder="e.g. Hard Copy Bond Paper"></div>
+          <div class="form-group"><label>Size / Specification</label><input type="text" id="paper-size" placeholder="A4, Letter, Legal, Long, Short"></div>
+          <div class="form-group"><label>Type</label><input type="text" id="paper-type" placeholder="80 GSM Paper, Tagboard Folder, Expandable"></div>
+          <div class="form-group"><label>Color / Finish</label><input type="text" id="paper-color" placeholder="Bright White, Kraft Brown, White"></div>
+          <div class="form-group"><label>Qty</label><input type="number" id="paper-qty" value="1" oninput="calcPaperTotal()"></div>
+          <div class="form-group"><label>Unit (UoM)</label><input type="text" id="paper-unit" placeholder="reams, boxes, packs, pcs"></div>
+          <div class="form-group"><label>Supply Closet / Shelf</label><input type="text" id="paper-location" placeholder="Supply Room Cabinet B"></div>
+          <div class="form-group span-2"><label>Remarks / Notes</label><input type="text" id="paper-remarks" placeholder="Used for official company documentation"></div>
+        </div>
+        <div class="form-section-title">Procurement & Cost</div>
+        <div class="form-grid">
+          <div class="form-group"><label>PO Number</label><input type="text" id="paper-poNo"></div>
+          <div class="form-group"><label>Unit Cost (₱)</label><input type="number" id="paper-unitCost" oninput="calcPaperTotal()"></div>
+          <div class="form-group"><label>Total Cost (₱)</label><input type="number" id="paper-totalCost" readonly></div>
+        </div>
+      </div>
+
+      <!-- FORM 2: PENS & DESK ACCESSORIES -->
+      <div id="form-cat-desk" class="cat-form">
+        <div class="form-section-title">Pens & Small Desk Supplies Details</div>
+        <div class="form-grid">
+          <div class="form-group"><label>SKU / Code</label><input type="text" id="desk-sku" placeholder="DSK-201"></div>
+          <div class="form-group span-2"><label>Item Name / Description</label><input type="text" id="desk-description" placeholder="e.g. Gel Pen 0.7mm / Paper Clips Stainless"></div>
+          <div class="form-group"><label>Brand / Manufacturer</label><input type="text" id="desk-brand" placeholder="e.g. Pilot, Faber-Castell, Joy"></div>
+          <div class="form-group"><label>Size / Variant</label><input type="text" id="desk-size" placeholder="0.5mm, 33mm Clips, Large Binder Clips"></div>
+          <div class="form-group"><label>Ink / Item Color</label><input type="text" id="desk-color" placeholder="Black, Blue, Silver, Assorted"></div>
+          <div class="form-group"><label>Qty</label><input type="number" id="desk-qty" value="1"></div>
+          <div class="form-group"><label>Unit</label><input type="text" id="desk-unit" placeholder="boxes, packs, pcs, tubs"></div>
+          <div class="form-group"><label>Storage Bin / Shelf</label><input type="text" id="desk-location" placeholder="Shelf A Drawer 2"></div>
+        </div>
+        <div class="form-section-title">Procurement & Cost</div>
+        <div class="form-grid">
+          <div class="form-group"><label>PO Number</label><input type="text" id="desk-poNo"></div>
+          <div class="form-group"><label>Total Cost (₱)</label><input type="number" id="desk-totalCost"></div>
+        </div>
+      </div>
+
+      <!-- FORM 3: ADMIN OFFICE FURNITURE -->
+      <div id="form-cat-assets" class="cat-form">
+        <div class="form-section-title">Furniture & Capital Asset Details</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Asset Tag / Code</label><input type="text" id="assets-sku" placeholder="AST-301"></div>
+          <div class="form-group"><label>Asset Name</label><input type="text" id="assets-name" placeholder="e.g. Ergonomic Executive Chair / Lateral Filing Cabinet"></div>
+          <div class="form-group"><label>Brand / Supplier Ref</label><input type="text" id="assets-brand" placeholder="e.g. Steelcase, ModernOffice"></div>
+          <div class="form-group span-2"><label>Dimensions & Materials</label><input type="text" id="assets-spec" placeholder="4-Drawer Steel, High-back Mesh, 140x70 Wood Desk"></div>
+          <div class="form-group"><label>Quantity</label><input type="number" id="assets-qty" value="1"></div>
+          <div class="form-group"><label>Unit</label><input type="text" id="assets-unit" placeholder="units, sets"></div>
+          <div class="form-group"><label>Office Area / Department</label><input type="text" id="assets-location" placeholder="Executive Suite 3B / HR Admin"></div>
+          <div class="form-group"><label>Asset Condition</label>
+            <select id="assets-condition">
+              <option value="Brand New">Brand New</option>
+              <option value="Good Condition">Good Condition</option>
+              <option value="Needs Maintenance">Needs Maintenance</option>
+              <option value="For Disposal">For Disposal</option>
+            </select>
+          </div>
+          <div class="form-group span-2"><label>PO Number & Procurement Cost (₱)</label>
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="assets-poNo" placeholder="PO Number">
+              <input type="number" id="assets-totalCost" placeholder="Total Cost (₱)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('item-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()">Save Item / Asset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ITEM DETAILS MODAL -->
+<div class="modal-overlay" id="view-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Supply / Asset Details</h2>
+      <button class="modal-close" onclick="closeModal('view-modal')">&times;</button>
+    </div>
+    <div class="modal-body" id="view-modal-body"></div>
+    <div class="modal-footer"><button class="btn btn-mint" onclick="closeModal('view-modal')">Close</button></div>
+  </div>
+</div>
+
+<!-- SUPPLIER MODAL -->
+<div class="modal-overlay" id="supplier-modal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header"><h2 id="supplier-modal-title">Add / Edit Vendor Supplier</h2><button class="modal-close" onclick="closeModal('supplier-modal')">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="supplier-id">
+      <div class="form-group"><label>Supplier / Vendor Name</label><input type="text" id="supplier-name"></div>
+      <div class="form-group"><label>Contact Person</label><input type="text" id="supplier-contact"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="supplier-email"></div>
+      <div class="form-group"><label>Phone</label><input type="text" id="supplier-phone"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('supplier-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSupplier()">Save Vendor</button>
+    </div>
+  </div>
+</div>
+
+<!-- PO MODAL -->
+<div class="modal-overlay" id="po-modal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header"><h2 id="po-modal-title">Create / Edit Purchase Order</h2><button class="modal-close" onclick="closeModal('po-modal')">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="po-id">
+      <div class="form-group"><label>PO Number</label><input type="text" id="po-number" placeholder="PO-2026-001"></div>
+      <div class="form-group"><label>Supplier</label><select id="po-supplier"></select></div>
+      <div class="form-group"><label>Item Reference</label><select id="po-item"></select></div>
+      <div class="form-group"><label>Quantity</label><input type="number" id="po-qty" value="1" min="1"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="po-status">
+          <option value="Pending">Pending</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('po-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePO()">Save Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- USER PROFILE MODAL -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header"><h2 id="user-modal-title">Add Admin / Staff User</h2><button class="modal-close" onclick="closeModal('user-modal')">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="user-id">
+      <div class="form-group"><label>Username</label><input type="text" id="user-username" placeholder="admin_user"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="user-password" placeholder="••••••••"></div>
+      <div class="form-group"><label>Full Name</label><input type="text" id="user-fullname" placeholder="Clara Oswald"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="user-email" placeholder="coswald@company.com"></div>
+      <div class="form-group"><label>Role</label>
+        <select id="user-role">
+          <option value="Admin">Admin (Facilities Manager)</option>
+          <option value="Standard User">Standard User (Admin Assistant)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('user-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()">Save User</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  var SK = { items: 'office_items', suppliers: 'office_suppliers', pos: 'office_pos', users: 'office_users', audit: 'office_audit', init: 'office_init' };
+  var currentUser = null;
+
+  var DEFAULT_USERS = [
+    { id: 'u1', username: 'admin', password: 'adminpassword', name: 'Clara Oswald (Admin Manager)', email: 'coswald@company.com', role: 'Admin' },
+    { id: 'u2', username: 'staff_john', password: 'userpassword', name: 'John Doe (Admin Assistant)', email: 'jdoe@company.com', role: 'Standard User' }
+  ];
+
+  function get(key, fallback) { try { var r = localStorage.getItem(SK[key]); return r ? JSON.parse(r) : fallback; } catch(e) { return fallback; } }
+  function set(key, val) { localStorage.setItem(SK[key], JSON.stringify(val)); }
+  function gid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function fmtCost(n) { return '₱' + (parseFloat(n || 0)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+  function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  function initData() {
+    var users = get('users', []);
+    var adminExists = users.some(function(u) { return u.username === 'admin' && u.password; });
+    
+    if (!users || users.length === 0 || !adminExists) {
+      set('users', DEFAULT_USERS);
+    }
+
+    if (!get('init', false)) {
+      set('suppliers', [
+        { id: 's1', name: 'National Office Depot', contact: 'Mark Reyes', email: 'sales@officedepot.com', phone: '+63 917 888 9900' },
+        { id: 's2', name: 'Executive Modern Furniture', contact: 'Sarah Chen', email: 'orders@modfurniture.com', phone: '+63 918 333 4455' }
+      ]);
+      set('items', [
+        { id: 'o1', category: 'Paper & Filing Supplies', sku: 'PPR-001', brand: 'Hard Copy Bond Paper', size: 'A4 (8.27 x 11.69 in)', type: '80 GSM Premium Sub70', color: 'Bright White', qty: 120, unit: 'reams', location: 'Supply Room Shelf 1', remarks: 'Standard printing paper for all departments', poNo: 'PO-2026-001', unitCost: 4.50, totalCost: 540.00 },
+        { id: 'o2', category: 'Paper & Filing Supplies', sku: 'PPR-002', brand: 'Long Expandable Folders', size: 'Legal / Long', type: 'Tagboard Heavy Duty', color: 'Kraft / Beige', qty: 350, unit: 'pcs', location: 'Supply Room Shelf 3', remarks: 'For accounting & HR documentation', poNo: 'PO-2026-001', unitCost: 0.60, totalCost: 210.00 },
+        { id: 'o3', category: 'Pens & Desk Accessories', sku: 'DSK-101', description: 'Pilot Gel Pen 0.7mm', brand: 'Pilot Super Gel', size: '0.7mm Fine', color: 'Black Ink', qty: 40, unit: 'boxes (12s)', location: 'Cabinet C Drawer 1', totalCost: 320.00, poNo: 'PO-2026-002' },
+        { id: 'o4', category: 'Pens & Desk Accessories', sku: 'DSK-102', description: 'Gem Clips & Binder Clips Set', brand: 'Joy Office', size: 'Assorted Sizes', color: 'Silver Steel', qty: 75, unit: 'tubs', location: 'Cabinet C Drawer 2', totalCost: 112.50, poNo: 'PO-2026-002' },
+        { id: 'o5', category: 'Admin Office Furniture', sku: 'AST-001', name: 'Ergonomic High-Back Executive Mesh Chair', brand: 'Steelcase Series', spec: 'Adjustable Lumbar & Armrests, Black/Rose Frame', qty: 25, unit: 'units', location: 'Main Office Floor & Executive Rooms', condition: 'Brand New', poNo: 'PO-2026-003', totalCost: 4375.00 },
+        { id: 'o6', category: 'Admin Office Furniture', sku: 'AST-002', name: '4-Drawer Lateral Steel Filing Cabinet', brand: 'ModernOffice Heavy Duty', spec: 'Anti-tilt mechanism, Central Key Lock, Cold-rolled steel', qty: 12, unit: 'units', location: 'Finance & HR Dep' }
+      ]);
+      set('pos', [
+        { id: 'p1', poNumber: 'PO-2026-001', supplierId: 's1', supplierName: 'National Office Depot', itemCode: 'Hard Copy Bond Paper', qty: 120, status: 'Completed' }
+      ]);
+      set('audit', [{ id: 'a1', timestamp: new Date().toISOString(), user: 'System', action: 'SupplyOps Office System Initialized' }]);
+      set('init', true);
+    }
+  }
+
+  /* LOGIN & AUTH */
+  window.performLogin = function() {
+    var userVal = document.getElementById('login-username').value.trim();
+    var passVal = document.getElementById('login-password').value.trim();
+    var errBox = document.getElementById('login-error');
+
+    var users = get('users', DEFAULT_USERS);
+    var user = users.find(function(u) {
+      return u.username.toLowerCase() === userVal.toLowerCase() && String(u.password) === passVal;
+    });
+    
+    if (!user) {
+      errBox.style.display = 'block';
+      return;
+    }
+    
+    errBox.style.display = 'none';
+    currentUser = user;
+    
+    document.getElementById('current-user-display').textContent = 'User: ' + currentUser.username + ' (' + currentUser.role + ')';
+    document.getElementById('login-screen').style.display = 'none';
+    
+    var adminElements = document.querySelectorAll('.admin-only');
+    if (currentUser.role !== 'Admin') {
+      adminElements.forEach(function(el) { el.style.display = 'none'; });
+    } else {
+      adminElements.forEach(function(el) { el.style.display = ''; });
+    }
+
+    logAction("User logged in (" + currentUser.role + ")");
+  };
+
+  window.logout = function() {
+    currentUser = null;
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+  };
+
+  function logAction(act) {
+    var a = get('audit', []);
+    a.unshift({ id: gid(), timestamp: new Date().toISOString(), user: currentUser ? currentUser.username : 'System', action: act });
+    set('audit', a);
+  }
+
+  /* DYNAMIC CATEGORY FORMS */
+  window.switchCategoryForm = function(cat) {
+    document.querySelectorAll('.cat-form').forEach(function(f) { f.classList.remove('active'); });
+    if (cat === 'Paper & Filing Supplies') {
+      document.getElementById('form-cat-paper').classList.add('active');
+    } else if (cat === 'Pens & Desk Accessories') {
+      document.getElementById('form-cat-desk').classList.add('active');
+    } else if (cat === 'Admin Office Furniture') {
+      document.getElementById('form-cat-assets').classList.add('active');
+    }
+  };
+
+  window.calcPaperTotal = function() {
+    var q = parseFloat(document.getElementById('paper-qty').value) || 0;
+    var u = parseFloat(document.getElementById('paper-unitCost').value) || 0;
+    document.getElementById('paper-totalCost').value = (q * u).toFixed(2);
+  };
+
+  window.showPage = function(pageId) {
+    if ((pageId === 'users' || pageId === 'audit-trail') && currentUser.role !== 'Admin') {
+      alert('Access Denied: Admin Managers only.');
+      return;
+    }
+
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    document.getElementById('page-' + pageId).classList.add('active');
+    document.querySelector('.nav-item[data-page="' + pageId + '"]').classList.add('active');
+    
+    if (pageId === 'dashboard') renderDashboard();
+    if (pageId === 'inventory') renderInventory();
+    if (pageId === 'suppliers') renderSuppliers();
+    if (pageId === 'purchase-orders') renderPOs();
+    if (pageId === 'users') renderUsers();
+    if (pageId === 'audit-trail') renderAudit();
+  };
+
+  function renderDashboard() {
+    var items = get('items', []);
+    var totalStock = items.reduce(function(s, i) { return s + (parseFloat(i.qty) || 0); }, 0);
+    var paperCount = items.filter(function(i) { return i.category === 'Paper & Filing Supplies'; }).length;
+    var deskCount = items.filter(function(i) { return i.category === 'Pens & Desk Accessories'; }).length;
+    var assetsCount = items.filter(function(i) { return i.category === 'Admin Office Furniture'; }).length;
+
+    document.getElementById('stat-total').textContent = totalStock;
+    document.getElementById('stat-paper').textContent = paperCount;
+    document.getElementById('stat-desk').textContent = deskCount;
+    document.getElementById('stat-assets').textContent = assetsCount;
+
+    var recentList = document.getElementById('recent-items-list');
+    recentList.innerHTML = '';
+    if(!items.length) { recentList.innerHTML = '<p style="color:#777;font-size:13px;">No office supplies in system yet.</p>'; return; }
+    
+    items.slice(-5).reverse().forEach(function(i) {
+      var name = i.brand || i.description || i.name || 'Office Item';
+      recentList.innerHTML += '<div style="padding:8px 0; border-bottom:1px dashed #ccc; display:flex; justify-content:space-between; font-size:13px;">' +
+        '<span><b>[' + esc(i.category) + ']</b> ' + esc(name) + '</span>' +
+        '<span class="badge badge-ok">' + i.qty + ' ' + esc(i.unit) + '</span>' +
+        '</div>';
+    });
+  }
+
+  window.renderInventory = function() {
+    var items = get('items', []);
+    var search = (document.getElementById('inventory-search').value || '').toLowerCase();
+    var tbody = document.getElementById('inventory-table');
+    tbody.innerHTML = '';
+
+    var filtered = items.filter(function(i) {
+      var txt = [i.category, i.sku, i.brand, i.description, i.name, i.location, i.size, i.spec, i.color, i.type, i.condition].join(' ').toLowerCase();
+      return txt.includes(search);
+    });
+
+    filtered.forEach(function(item) {
+      var brand = item.brand || item.name || '—';
+      var specs = item.spec || item.description || (item.size ? item.size + ' / ' + (item.color || '') : '—');
+      var typeSub = item.type || item.condition || 'Standard Item';
+      var po = item.poNo || '—';
+      var cost = item.totalCost ? fmtCost(item.totalCost) : '—';
+      var condStatus = item.condition || 'In Stock';
+      var loc = item.location || '—';
+
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="badge badge-cat">' + esc(item.category || 'Paper & Filing Supplies') + '</span></td>' +
+        '<td><b>' + esc(brand) + '</b>' + (item.sku ? '<br><small style="color:#777;">Code: ' + esc(item.sku) + '</small>' : '') + '</td>' +
+        '<td>' + esc(specs) + '</td>' +
+        '<td>' + esc(typeSub) + '</td>' +
+        '<td><b>' + (item.qty || 0) + '</b> ' + esc(item.unit) + '</td>' +
+        '<td>' + esc(loc) + '</td>' +
+        '<td>' + esc(po) + '</td>' +
+        '<td>' + cost + '</td>' +
+        '<td><span class="badge badge-ok">' + esc(condStatus) + '</span></td>' +
+        '<td>' +
+          '<button class="btn-icon" onclick="viewDetails(\'' + item.id + '\')">👁️</button> ' +
+          '<button class="btn-icon" onclick="editItem(\'' + item.id + '\')">✎</button> ' +
+          '<button class="btn-icon" onclick="deleteItem(\'' + item.id + '\')" style="color:red;">🗑</button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+  };
+
+  window.openItemModal = function() {
+    document.getElementById('item-id').value = '';
+    document.getElementById('item-modal-title').textContent = 'Add Office Supply / Admin Asset';
+    document.getElementById('item-category-select').value = 'Paper & Filing Supplies';
+    document.getElementById('item-category-select').disabled = false;
+    switchCategoryForm('Paper & Filing Supplies');
+
+    // Reset Inputs
+    var inputs = document.querySelectorAll('#item-modal input');
+    inputs.forEach(function(input) { if (input.type !== 'hidden') input.value = ''; });
+    document.getElementById('paper-qty').value = 1;
+    document.getElementById('desk-qty').value = 1;
+    document.getElementById('assets-qty').value = 1;
+
+    document.getElementById('item-modal').classList.add('active');
+  };
+
+  window.editItem = function(id) {
+    var items = get('items', []);
+    var item = items.find(function(i) { return i.id === id; });
+    if (!item) return;
+
+    document.getElementById('item-id').value = item.id;
+    document.getElementById('item-modal-title').textContent = 'Edit Supply / Asset Record';
+    var cat = item.category || 'Paper & Filing Supplies';
+    document.getElementById('item-category-select').value = cat;
+    document.getElementById('item-category-select').disabled = true;
+    switchCategoryForm(cat);
+
+    if (cat === 'Paper & Filing Supplies') {
+      document.getElementById('paper-sku').value = item.sku || '';
+      document.getElementById('paper-brand').value = item.brand || '';
+      document.getElementById('paper-size').value = item.size || '';
+      document.getElementById('paper-type').value = item.type || '';
+      document.getElementById('paper-color').value = item.color || '';
+      document.getElementById('paper-qty').value = item.qty || 1;
+      document.getElementById('paper-unit').value = item.unit || '';
+      document.getElementById('paper-location').value = item.location || '';
+      document.getElementById('paper-remarks').value = item.remarks || '';
+      document.getElementById('paper-poNo').value = item.poNo || '';
+      document.getElementById('paper-unitCost').value = item.unitCost || '';
+      document.getElementById('paper-totalCost').value = item.totalCost || '';
+    } else if (cat === 'Pens & Desk Accessories') {
+      document.getElementById('desk-sku').value = item.sku || '';
+      document.getElementById('desk-description').value = item.description || '';
+      document.getElementById('desk-brand').value = item.brand || '';
+      document.getElementById('desk-size').value = item.size || '';
+      document.getElementById('desk-color').value = item.color || '';
+      document.getElementById('desk-qty').value = item.qty || 1;
+      document.getElementById('desk-unit').value = item.unit || '';
+      document.getElementById('desk-location').value = item.location || '';
+      document.getElementById('desk-poNo').value = item.poNo || '';
+      document.getElementById('desk-totalCost').value = item.totalCost || '';
+    } else if (cat === 'Admin Office Furniture') {
+      document.getElementById('assets-sku').value = item.sku || '';
+      document.getElementById('assets-name').value = item.name || '';
+      document.getElementById('assets-brand').value = item.brand || '';
+      document.getElementById('assets-spec').value = item.spec || '';
+      document.getElementById('assets-qty').value = item.qty || 1;
+      document.getElementById('assets-unit').value = item.unit || '';
+      document.getElementById('assets-location').value = item.location || '';
+      document.getElementById('assets-condition').value = item.condition || 'Brand New';
+      document.getElementById('assets-poNo').value = item.poNo || '';
+      document.getElementById('assets-totalCost').value = item.totalCost || '';
+    }
+
+    document.getElementById('item-modal').classList.add('active');
+  };
+
+  window.saveItem = function() {
+    var id = document.getElementById('item-id').value;
+    var cat = document.getElementById('item-category-select').value;
+    var items = get('items', []);
+    var itemData = { id: id || gid(), category: cat };
+
+    if (cat === 'Paper & Filing Supplies') {
+      itemData.sku = document.getElementById('paper-sku').value;
+      itemData.brand = document.getElementById('paper-brand').value;
+      itemData.size = document.getElementById('paper-size').value;
+      itemData.type = document.getElementById('paper-type').value;
+      itemData.color = document.getElementById('paper-color').value;
+      itemData.qty = parseFloat(document.getElementById('paper-qty').value) || 0;
+      itemData.unit = document.getElementById('paper-unit').value;
+      itemData.location = document.getElementById('paper-location').value;
+      itemData.remarks = document.getElementById('paper-remarks').value;
+      itemData.poNo = document.getElementById('paper-poNo').value;
+      itemData.unitCost = parseFloat(document.getElementById('paper-unitCost').value) || 0;
+      itemData.totalCost = parseFloat(document.getElementById('paper-totalCost').value) || 0;
+
+      if (!itemData.brand) return alert('Item Description / Brand is required!');
+
+    } else if (cat === 'Pens & Desk Accessories') {
+      itemData.sku = document.getElementById('desk-sku').value;
+      itemData.description = document.getElementById('desk-description').value;
+      itemData.brand = document.getElementById('desk-brand').value;
+      itemData.size = document.getElementById('desk-size').value;
+      itemData.color = document.getElementById('desk-color').value;
+      itemData.qty = parseFloat(document.getElementById('desk-qty').value) || 0;
+      itemData.unit = document.getElementById('desk-unit').value;
+      itemData.location = document.getElementById('desk-location').value;
+      itemData.poNo = document.getElementById('desk-poNo').value;
+      itemData.totalCost = parseFloat(document.getElementById('desk-totalCost').value) || 0;
+
+      if (!itemData.description) return alert('Description is required for Desk Accessories!');
+
+    } else if (cat === 'Admin Office Furniture') {
+      itemData.sku = document.getElementById('assets-sku').value;
+      itemData.name = document.getElementById('assets-name').value;
+      itemData.brand = document.getElementById('assets-brand').value;
+      itemData.spec = document.getElementById('assets-spec').value;
+      itemData.qty = parseFloat(document.getElementById('assets-qty').value) || 0;
+      itemData.unit = document.getElementById('assets-unit').value;
+      itemData.location = document.getElementById('assets-location').value;
+      itemData.condition = document.getElementById('assets-condition').value;
+      itemData.poNo = document.getElementById('assets-poNo').value;
+      itemData.totalCost = parseFloat(document.getElementById('assets-totalCost').value) || 0;
+
+      if (!itemData.name) return alert('Asset Name is required!');
+    }
+
+    if (id) {
+      var idx = items.findIndex(function(i) { return i.id === id; });
+      if (idx !== -1) items[idx] = itemData;
+      logAction("Updated item (" + cat + ")");
+    } else {
+      items.push(itemData);
+      logAction("Added new item (" + cat + ")");
+    }
+
+    set('items', items);
+    closeModal('item-modal');
+    renderInventory(); renderDashboard();
+  };
+
+  window.viewDetails = function(id) {
+    var items = get('items', []);
+    var item = items.find(function(i) { return i.id === id; });
+    if (!item) return;
+
+    var html = '<div class="details-grid">';
+    html += '<div class="details-item"><div class="details-label">Category</div><div class="details-val">' + (item.category || 'Paper & Filing Supplies') + '</div></div>';
+
+    if (item.category === 'Paper & Filing Supplies' || !item.category) {
+      var keysPaper = [
+        ['SKU / Code', item.sku], ['Item / Brand', item.brand], ['Paper / Folder Size', item.size],
+        ['Type / Paper GSM', item.type], ['Color', item.color], ['Qty', item.qty], ['Unit', item.unit],
+        ['Supply Closet', item.location], ['Remarks', item.remarks], ['PO Number', item.poNo],
+        ['Unit Cost', fmtCost(item.unitCost)], ['Total Cost', fmtCost(item.totalCost)]
+      ];
+      keysPaper.forEach(function(k) { html += '<div class="details-item"><div class="details-label">' + k[0] + '</div><div class="details-val">' + (k[1] || '—') + '</div></div>'; });
+    } else if (item.category === 'Pens & Desk Accessories') {
+      var keysDesk = [
+        ['SKU / Code', item.sku], ['Description', item.description], ['Brand', item.brand],
+        ['Variant / Size', item.size], ['Ink / Color', item.color], ['Qty', item.qty], ['Unit', item.unit],
+        ['Storage Bin', item.location], ['PO Number', item.poNo], ['Total Cost', fmtCost(item.totalCost)]
+      ];
+      keysDesk.forEach(function(k) { html += '<div class="details-item"><div class="details-label">' + k[0] + '</div><div class="details-val">' + (k[1] || '—') + '</div></div>'; });
+    } else if (item.category === 'Admin Office Furniture') {
+      var keysAssets = [
+        ['Asset Tag Code', item.sku], ['Asset Name', item.name], ['Brand / Supplier Ref', item.brand],
+        ['Dimensions & Specs', item.spec], ['Quantity', item.qty], ['Unit', item.unit],
+        ['Office Dept Location', item.location], ['Condition', item.condition], ['PO Number', item.poNo],
+        ['Total Cost', fmtCost(item.totalCost)]
+      ];
+      keysAssets.forEach(function(k) { html += '<div class="details-item"><div class="details-label">' + k[0] + '</div><div class="details-val">' + (k[1] || '—') + '</div></div>'; });
+    }
+
+    html += '</div>';
+    document.getElementById('view-modal-body').innerHTML = html;
+    document.getElementById('view-modal').classList.add('active');
+  };
+
+  window.deleteItem = function(id) {
+    if (!confirm('Delete supply/asset record?')) return;
+    set('items', get('items', []).filter(function(i) { return i.id !== id; }));
+    logAction("Deleted supply/asset item");
+    renderInventory(); renderDashboard();
+  };
+
+  /* USER PROFILES LOGIC */
+  window.renderUsers = function() {
+    var users = get('users', []);
+    var tbody = document.getElementById('users-table');
+    tbody.innerHTML = '';
+    users.forEach(function(u) {
+      var actions = (currentUser && currentUser.role === 'Admin') ? 
+        '<button class="btn-icon" onclick="editUser(\'' + u.id + '\')">✎</button> ' +
+        '<button class="btn-icon" onclick="deleteUser(\'' + u.id + '\')" style="color:red;">🗑</button>' : '<em>Read Only</em>';
+      
+      tbody.innerHTML += '<tr>' +
+        '<td><b>' + esc(u.username) + '</b></td>' +
+        '<td>' + esc(u.name) + '</td>' +
+        '<td><span class="badge ' + (u.role === 'Admin' ? 'badge-ok' : 'badge-low') + '">' + esc(u.role) + '</span></td>' +
+        '<td>' + esc(u.email) + '</td>' +
+        '<td>' + actions + '</td>' +
+        '</tr>';
+    });
+  };
+
+  window.openUserModal = function() {
+    if(!currentUser || currentUser.role !== 'Admin') return alert('Only Facilities Managers/Admins can manage users.');
+    document.getElementById('user-modal-title').textContent = 'Add System User';
+    document.getElementById('user-id').value = '';
+    document.getElementById('user-username').value = '';
+    document.getElementById('user-password').value = '';
+    document.getElementById('user-fullname').value = '';
+    document.getElementById('user-email').value = '';
+    document.getElementById('user-role').value = 'Standard User';
+    document.getElementById('user-modal').classList.add('active');
+  };
+
+  window.editUser = function(id) {
+    if(!currentUser || currentUser.role !== 'Admin') return alert('Only Facilities Managers/Admins can edit users.');
+    var users = get('users', []);
+    var u = users.find(function(user) { return user.id === id; });
+    if (!u) return;
+
+    document.getElementById('user-modal-title').textContent = 'Edit System User';
+    document.getElementById('user-id').value = u.id;
+    document.getElementById('user-username').value = u.username;
+    document.getElementById('user-password').value = u.password;
+    document.getElementById('user-fullname').value = u.name;
+    document.getElementById('user-email').value = u.email;
+    document.getElementById('user-role').value = u.role;
+    document.getElementById('user-modal').classList.add('active');
+  };
+
+  window.saveUser = function() {
+    var id = document.getElementById('user-id').value;
+    var username = document.getElementById('user-username').value.trim();
+    var password = document.getElementById('user-password').value.trim();
+    var name = document.getElementById('user-fullname').value.trim();
+    var email = document.getElementById('user-email').value.trim();
+    var role = document.getElementById('user-role').value;
+
+    if (!username || !password || !name) return alert('Username, Password, and Full Name are required!');
+
+    var users = get('users', []);
+    var duplicate = users.find(function(u) { return u.username.toLowerCase() === username.toLowerCase() && u.id !== id; });
+    if(duplicate) return alert('Username already exists!');
+
+    if (id) {
+      var idx = users.findIndex(function(u) { return u.id === id; });
+      if (idx !== -1) {
+        users[idx] = { id: id, username: username, password: password, name: name, email: email, role: role };
+        logAction("Updated user: " + username);
+        if (currentUser && currentUser.id === id) {
+          currentUser = users[idx];
+          document.getElementById('current-user-display').textContent = 'User: ' + currentUser.username + ' (' + currentUser.role + ')';
+        }
+      }
+    } else {
+      users.push({ id: gid(), username: username, password: password, name: name, email: email, role: role });
+      logAction("Created user: " + username);
+    }
+
+    set('users', users);
+    closeModal('user-modal');
+    renderUsers();
+  };
+
+  window.deleteUser = function(id) {
+    var users = get('users', []);
+    var userToDelete = users.find(function(u){ return u.id === id; });
+    if (userToDelete && userToDelete.username === currentUser.username) return alert('You cannot delete your own logged-in user!');
+    if (!confirm('Are you sure you want to delete this user profile?')) return;
+    
+    set('users', users.filter(function(u){ return u.id !== id; }));
+    logAction("Deleted user profile");
+    renderUsers();
+  };
+
+  /* SUPPLIERS LOGIC */
+  window.renderSuppliers = function() {
+    var sups = get('suppliers', []);
+    var tbody = document.getElementById('suppliers-table');
+    tbody.innerHTML = '';
+    sups.forEach(function(s) {
+      tbody.innerHTML += '<tr>' +
+        '<td><b>' + esc(s.name) + '</b></td>' +
+        '<td>' + esc(s.contact) + '</td>' +
+        '<td>' + esc(s.email) + '</td>' +
+        '<td>' + esc(s.phone) + '</td>' +
+        '<td>' +
+          '<button class="btn-icon" onclick="editSupplier(\'' + s.id + '\')">✎</button> ' +
+          '<button class="btn-icon" onclick="deleteSupplier(\'' + s.id + '\')" style="color:red;">🗑</button>' +
+        '</td>' +
+        '</tr>';
+    });
+  };
+
+  window.openSupplierModal = function() {
+    document.getElementById('supplier-modal-title').textContent = 'Add Vendor Supplier';
+    document.getElementById('supplier-id').value = '';
+    document.getElementById('supplier-name').value = '';
+    document.getElementById('supplier-contact').value = '';
+    document.getElementById('supplier-email').value = '';
+    document.getElementById('supplier-phone').value = '';
+    document.getElementById('supplier-modal').classList.add('active');
+  };
+
+  window.editSupplier = function(id) {
+    var sups = get('suppliers', []);
+    var s = sups.find(function(item) { return item.id === id; });
+    if (!s) return;
+
+    document.getElementById('supplier-modal-title').textContent = 'Edit Vendor Supplier';
+    document.getElementById('supplier-id').value = s.id;
+    document.getElementById('supplier-name').value = s.name;
+    document.getElementById('supplier-contact').value = s.contact;
+    document.getElementById('supplier-email').value = s.email;
+    document.getElementById('supplier-phone').value = s.phone;
+    document.getElementById('supplier-modal').classList.add('active');
+  };
+
+  window.saveSupplier = function() {
+    var id = document.getElementById('supplier-id').value;
+    var name = document.getElementById('supplier-name').value.trim();
+    if (!name) return alert('Supplier name is required!');
+    
+    var sups = get('suppliers', []);
+    var supplierData = {
+      id: id || gid(),
+      name: name,
+      contact: document.getElementById('supplier-contact').value,
+      email: document.getElementById('supplier-email').value,
+      phone: document.getElementById('supplier-phone').value
+    };
+
+    if (id) {
+      var idx = sups.findIndex(function(s) { return s.id === id; });
+      if (idx !== -1) sups[idx] = supplierData;
+      logAction("Updated Supplier: " + name);
+    } else {
+      sups.push(supplierData);
+      logAction("Added Supplier: " + name);
+    }
+    
+    set('suppliers', sups);
+    closeModal('supplier-modal');
+    renderSuppliers();
+  };
+
+  window.deleteSupplier = function(id) {
+    if(!confirm('Delete this supplier?')) return;
+    set('suppliers', get('suppliers', []).filter(function(s){ return s.id !== id; }));
+    logAction("Deleted supplier");
+    renderSuppliers();
+  };
+
+  /* PURCHASE ORDERS LOGIC */
+  window.renderPOs = function() {
+    var pos = get('pos', []);
+    var tbody = document.getElementById('po-table');
+    tbody.innerHTML = '';
+    pos.forEach(function(p) {
+      tbody.innerHTML += '<tr>' +
+        '<td><b>' + esc(p.poNumber) + '</b></td>' +
+        '<td>' + esc(p.supplierName) + '</td>' +
+        '<td>' + esc(p.itemCode) + '</td>' +
+        '<td>' + p.qty + '</td>' +
+        '<td><span class="badge badge-ok">' + esc(p.status) + '</span></td>' +
+        '<td>' +
+          '<button class="btn-icon" onclick="editPO(\'' + p.id + '\')">✎</button> ' +
+          '<button class="btn-icon" onclick="deletePO(\'' + p.id + '\')" style="color:red;">🗑</button>' +
+        '</td>' +
+        '</tr>';
+    });
+  };
+
+  window.openPOModal = function() {
+    document.getElementById('po-modal-title').textContent = 'Create Purchase Order';
+    document.getElementById('po-id').value = '';
+    populateSuppliersSelect('po-supplier', '');
+    populateItemsSelect('po-item', '');
+    document.getElementById('po-number').value = 'PO-2026-' + Math.floor(100 + Math.random() * 900);
+    document.getElementById('po-qty').value = 1;
+    document.getElementById('po-status').value = 'Pending';
+    document.getElementById('po-modal').classList.add('active');
+  };
+
+  window.editPO = function(id) {
+    var pos = get('pos', []);
+    var p = pos.find(function(po) { return po.id === id; });
+    if (!p) return;
+
+    document.getElementById('po-modal-title').textContent = 'Edit Purchase Order';
+    document.getElementById('po-id').value = p.id;
+    populateSuppliersSelect('po-supplier', p.supplierId);
+    populateItemsSelect('po-item', p.itemCode);
+    document.getElementById('po-number').value = p.poNumber;
+    document.getElementById('po-qty').value = p.qty;
+    document.getElementById('po-status').value = p.status;
+    document.getElementById('po-modal').classList.add('active');
+  };
+
+  window.savePO = function() {
+    var id = document.getElementById('po-id').value;
+    var number = document.getElementById('po-number').value.trim();
+    var supplierId = document.getElementById('po-supplier').value;
+    var itemCode = document.getElementById('po-item').value;
+    
+    if(!number || !supplierId) return alert('Fill in PO number and Supplier');
+
+    var sups = get('suppliers', []);
+    var sup = sups.find(function(s){ return s.id === supplierId; });
+
+    var pos = get('pos', []);
+    var poData = {
+      id: id || gid(),
+      poNumber: number,
+      supplierId: supplierId,
+      supplierName: sup ? sup.name : 'Unknown',
+      itemCode: itemCode,
+      qty: document.getElementById('po-qty').value,
+      status: document.getElementById('po-status').value
+    };
+
+    if (id) {
+      var idx = pos.findIndex(function(p) { return p.id === id; });
+      if (idx !== -1) pos[idx] = poData;
+      logAction("Updated PO: " + number);
+    } else {
+      pos.push(poData);
+      logAction("Created PO: " + number);
+    }
+
+    set('pos', pos);
+    closeModal('po-modal');
+    renderPOs(); renderDashboard();
+  };
+
+  window.deletePO = function(id) {
+    if(!confirm('Delete this PO?')) return;
+    set('pos', get('pos', []).filter(function(p){ return p.id !== id; }));
+    logAction("Deleted PO");
+    renderPOs(); renderDashboard();
+  };
+
+  function renderAudit() {
+    var a = get('audit', []);
+    var tbody = document.getElementById('audit-table');
+    tbody.innerHTML = '';
+    a.forEach(function(x) {
+      tbody.innerHTML += '<tr><td>' + new Date(x.timestamp).toLocaleString() + '</td><td>' + esc(x.user) + '</td><td>' + esc(x.action) + '</td></tr>';
+    });
+  }
+
+  /* EXPORT AUDIT LOG (CSV) */
+  window.exportAuditCSV = function() {
+    if(!currentUser || currentUser.role !== 'Admin') {
+      return alert('Access Denied: Only administrators can export the Audit Trail.');
+    }
+    
+    var audit = get('audit', []);
+    if(!audit.length) return alert('No audit records to export.');
+
+    var csvRows = [["Timestamp", "User", "Action"].join(',')];
+
+    audit.forEach(function(a) {
+      var row = [
+        new Date(a.timestamp).toLocaleString(),
+        a.user,
+        a.action
+      ].map(function(val){ return '"' + (val || '').toString().replace(/"/g, '""') + '"'; });
+      csvRows.push(row.join(','));
+    });
+
+    var blob = new Blob([csvRows.join('\n')], {type: 'text/csv'});
+    var link = document.createElement('a'); 
+    link.href = URL.createObjectURL(blob); 
+    link.download = 'Office_SupplyOps_Audit_Trail.csv'; 
+    link.click();
+
+    logAction("Exported Audit Trail to CSV");
+  };
+
+  function populateSuppliersSelect(id, selected) {
+    var sups = get('suppliers', []);
+    var sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">-- Select Supplier --</option>';
+    sups.forEach(function(s) {
+      sel.innerHTML += '<option value="' + s.id + '" ' + (s.id === selected || s.name === selected ? 'selected' : '') + '>' + esc(s.name) + '</option>';
+    });
+  }
+
+  function populateItemsSelect(id, selected) {
+    var items = get('items', []);
+    var sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">-- Select Item Reference --</option>';
+    items.forEach(function(i) {
+      var title = i.brand || i.description || i.name || i.sku;
+      sel.innerHTML += '<option value="' + esc(title) + '" ' + (title === selected ? 'selected' : '') + '>' + esc(title) + ' (' + esc(i.category) + ')</option>';
+    });
+  }
+
+  /* JSON BACKUP / RESTORE */
+  window.exportJSON = function() {
+    if(!currentUser || currentUser.role !== 'Admin') return alert('Access Denied');
+    var data = { items: get('items',[]), suppliers: get('suppliers',[]), pos: get('pos',[]), users: get('users',[]), audit: get('audit',[]) };
+    var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'SupplyOps_Office_Backup.json'; a.click();
+  };
+
+  window.importJSON = function(e) {
+    if(!currentUser || currentUser.role !== 'Admin') return alert('Access Denied');
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        var d = JSON.parse(evt.target.result);
+        if(d.items) set('items', d.items);
+        if(d.suppliers) set('suppliers', d.suppliers);
+        if(d.pos) set('pos', d.pos);
+        if(d.users) set('users', d.users);
+        alert('Office SupplyOps JSON Data restored successfully!');
+        location.reload();
+      } catch(err) { alert('Invalid JSON file.'); }
+    };
+    reader.readAsText(file);
+  };
+
+  /* CSV EXPORT */
+  window.exportCSV = function() {
+    var items = get('items', []);
+    if(!items.length) return alert('No office supplies to export.');
+    var headers = ["Category","Item_Brand_Name","Specs_Dimensions","Type_Condition","Qty","Unit","Location","PONo","TotalCost","Remarks"];
+    var csvRows = [headers.join(',')];
+
+    items.forEach(function(i) {
+      var row = [
+        i.category || 'Paper & Filing Supplies',
+        i.brand || i.name || '',
+        i.spec || i.description || (i.size ? i.size + ' ' + (i.color || '') : ''),
+        i.type || i.condition || '',
+        i.qty || 0,
+        i.unit || '',
+        i.location || '',
+        i.poNo || '',
+        i.totalCost || 0,
+        i.remarks || ''
+      ].map(function(val){ return '"' + (val || '').toString().replace(/"/g, '""') + '"'; });
+      csvRows.push(row.join(','));
+    });
+
+    var blob = new Blob([csvRows.join('\n')], {type: 'text/csv'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Office_Inventory_Export.csv'; a.click();
+  };
+
+  window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); };
+
+  // Startup initialization
+  initData();
+  renderDashboard();
+})();
+</script>
+</body>
+</html>

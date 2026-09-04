@@ -1,0 +1,12 @@
+{
+  "name": "supplyops",
+  "version": "1.0.0",
+  "description": "SupplyOps - Office Supplies & Admin Asset Inventory (local network app)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
